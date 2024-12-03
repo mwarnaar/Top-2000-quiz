@@ -3,7 +3,7 @@
         <title>Top 2000 quiz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style>
-        .episodes {
+        .action-items {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -21,13 +21,18 @@
             padding: 0.8rem 1rem;
             font-weight: bolder;
         }
+        #play {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .hidden {
             display: none;
         }
-        .episode {
+        .action-item {
             width: 50%;
             margin-bottom: .8rem;
-            padding: .8rem 1rem;
+            padding: .1rem .2rem;
         }
         </style>
     </head>
@@ -36,9 +41,9 @@
         <h1 style="text-align: center; font-family: sans-serif">Raad het nummer</h1>
         <h4 style="text-align: center; font-family: sans-serif">Top 2000 (lijst 2023)</h4>
         <img src="/public/top2000_logo.png" alt="Top2000 logo" height="71" style="margin: 1rem auto; display: block">
-        <div class="episodes">
-            <button class="episode" id="play">Speel/pauzeer</button>
-            <button class="episode" disabled id="reveal">Geef prijs</button>
+        <div class="action-items">
+            <button class="action-item" id="play"><span style="height: 1rem; margin-right: .3rem" id="play-icon">&#9654;</span> <span id="play-text">Spelen</span></button>
+            <button class="action-item" disabled id="reveal">Geef prijs</button>
         </div>
         <div id="track-details" class="hidden">
             <table style="margin: 0 auto">
@@ -48,7 +53,7 @@
             </table>
             <div class="track-row"><a target="_blank" title="Open nummer in Spotify" href="https://open.spotify.com/track/{{ .track_id }}"><img height=250 width=250 src="{{ .album_image_url }}" alt="{{ .album_name }}"></a></div>
 
-            <a href="/"><button style="margin-top: 1rem" class="episode">Volgende nummer</button></a>
+            <a href="/"><button style="margin-top: 1rem" class="action-item">Volgende nummer</button></a>
         </div>
         </div>
         <div id="embed-iframe"></div>
@@ -63,15 +68,37 @@
                     height: '0',
                     uri: {{ .track_uri }}
                 };
+                let playing = false
                 const callback = (EmbedController) => {
-                    document.getElementById("play").addEventListener("click", () => {
-                        EmbedController.togglePlay()
+                    let togglePlay = () => {
+                        playing = !playing
+                        if (!playing) {
+                            EmbedController.pause()
+                            document.getElementById("play-icon").innerHTML = "&#9654;" // Play symbol
+                            document.getElementById("play-text").innerText = "Spelen"
+                        } else {
+                            // Playing
+                            EmbedController.play()
+                            document.getElementById("play-icon").innerHTML = "&#x23F8" // Pause symbol
+                            document.getElementById("play-text").innerText = "Pauzeren"
+                        }
                         if (!playedOnce) {
                             setTimeout(() => {
                                 document.getElementById("reveal").removeAttribute("disabled")
                             }, 750)
                         }
                         playedOnce = true
+                    }
+                    document.getElementById("play").addEventListener("click", () => {
+                        togglePlay()
+                    })
+                    document.addEventListener("keyup", e => {
+                        if (e.key == " " ||
+                            e.code == "Space" ||
+                            e.keyCode == 32
+                        ) {
+                            togglePlay()
+                        }
                     })
                 };
                 IFrameAPI.createController(element, options, callback);
