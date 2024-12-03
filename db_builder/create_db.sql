@@ -1,0 +1,1 @@
+CREATE TABLE all_songs(track_id VARCHAR(255), track_name VARCHAR(255), track_href VARCHAR(1024), artist_id VARCHAR(255), artist_name VARCHAR(255), album_id VARCHAR(255), album_name VARCHAR(255), album_release_date VARCHAR(10), album_image_url VARCHAR(1024)));

@@ -1,0 +1,85 @@
+<html lang="nl">
+    <head>
+        <title>Top 2000 quiz</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <style>
+        .episodes {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        th {
+            text-align: left;
+        }
+        #track-details {
+            text-align: center;
+            width: 70%;
+            margin: 0 auto;
+        }
+        .inner-details {
+            text-align: left;
+            padding: 0.8rem 1rem;
+            font-weight: bolder;
+        }
+        .hidden {
+            display: none;
+        }
+        .episode {
+            width: 50%;
+            margin-bottom: .8rem;
+            padding: .8rem 1rem;
+        }
+        </style>
+    </head>
+
+    <body>
+        <h1 style="text-align: center; font-family: sans-serif">Raad het nummer</h1>
+        <h4 style="text-align: center; font-family: sans-serif">Top 2000 (lijst 2023)</h4>
+        <img src="/public/top2000_logo.png" alt="Top2000 logo" height="71" style="margin: 1rem auto; display: block">
+        <div class="episodes">
+            <button class="episode" id="play">Speel/pauzeer</button>
+            <button class="episode" disabled id="reveal">Geef prijs</button>
+        </div>
+        <div id="track-details" class="hidden">
+            <table style="margin: 0 auto">
+                <tr><th>Titel</th><td>{{ .track_name }}</td></tr>
+                <tr><th>Artiest</th><td>{{ .artist_name }}</td></tr>
+                <tr><th>Album</th><td>{{ .album_name }} &mdash; uitgebracht {{ .album_release_date }}</td></tr>
+            </table>
+            <div class="track-row"><a target="_blank" title="Open nummer in Spotify" href="https://open.spotify.com/track/{{ .track_id }}"><img height=250 width=250 src="{{ .album_image_url }}" alt="{{ .album_name }}"></a></div>
+
+            <a href="/"><button style="margin-top: 1rem" class="episode">Volgende nummer</button></a>
+        </div>
+        </div>
+        <div id="embed-iframe"></div>
+        <script src="https://open.spotify.com/embed/iframe-api/v1" async>
+        </script>
+        <script type="text/javascript">
+            let playedOnce = false
+            window.onSpotifyIframeApiReady = (IFrameAPI) => {
+                const element = document.getElementById('embed-iframe');
+                const options = {
+                    width: '0%',
+                    height: '0',
+                    uri: {{ .track_uri }}
+                };
+                const callback = (EmbedController) => {
+                    document.getElementById("play").addEventListener("click", () => {
+                        EmbedController.togglePlay()
+                        if (!playedOnce) {
+                            setTimeout(() => {
+                                document.getElementById("reveal").removeAttribute("disabled")
+                            }, 750)
+                        }
+                        playedOnce = true
+                    })
+                };
+                IFrameAPI.createController(element, options, callback);
+            };
+
+            document.getElementById("reveal").addEventListener("click", () => {
+                document.getElementById("track-details").classList.remove("hidden")
+            })
+        </script>
+    </body>
+</html>
