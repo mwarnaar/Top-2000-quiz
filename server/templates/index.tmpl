@@ -50,7 +50,7 @@
         <h4 style="text-align: center; font-family: sans-serif">Top 2000 (lijst 2023)</h4>
         <div class="action-items">
             <button class="action-item" id="play">&#9199; <span id="play-text">Spelen</span></button>
-            <button class="action-item" disabled id="reveal">Toon nummer</button>
+            <button class="action-item" disabled="disabled" id="reveal">Toon nummer</button>
         </div>
         <div id="track-details" class="hidden">
             <table style="margin: 0 auto">
@@ -98,14 +98,6 @@
                     }
                     document.getElementById("play").addEventListener("click", () => {
                         togglePlay()
-                    })
-                    document.addEventListener("keyup", e => {
-                        if (e.key == " " ||
-                            e.code == "Space" ||
-                            e.keyCode == 32
-                        ) {
-                            togglePlay()
-                        }
                     })
                 };
                 IFrameAPI.createController(element, options, callback);
