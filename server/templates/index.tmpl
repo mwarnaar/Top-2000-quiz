@@ -4,10 +4,22 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style>
         .action-items {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            min-width: 125px;
+            text-align: center;
+            margin: 0 auto;
+            width: 20%;
         }
+        @media (width <= 768px) {
+            .action-items {
+                width: 50%;
+            }
+        }
+        @media (width <= 992px) {
+            .action-items {
+                width: 40%;
+            }
+        }
+
         th {
             text-align: left;
         }
@@ -21,18 +33,13 @@
             padding: 0.8rem 1rem;
             font-weight: bolder;
         }
-        #play {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
         .hidden {
             display: none;
         }
         .action-item {
-            width: 50%;
+            width: 100%;
             margin-bottom: .8rem;
-            padding: .1rem .2rem;
+            padding: .3rem .2rem;
         }
         </style>
     </head>
@@ -42,7 +49,7 @@
         <h1 style="text-align: center; font-family: sans-serif">Raad het nummer</h1>
         <h4 style="text-align: center; font-family: sans-serif">Top 2000 (lijst 2023)</h4>
         <div class="action-items">
-            <button class="action-item" id="play"><span style="height: 1rem; margin-right: .3rem" id="play-icon">&#9654;</span> <span id="play-text">Spelen</span></button>
+            <button class="action-item" id="play">&#9199; <span id="play-text">Spelen</span></button>
             <button class="action-item" disabled id="reveal">Toon nummer</button>
         </div>
         <div id="track-details" class="hidden">
@@ -74,12 +81,10 @@
                         playing = !playing
                         if (!playing) {
                             EmbedController.pause()
-                            document.getElementById("play-icon").innerHTML = "&#9654;" // Play symbol
                             document.getElementById("play-text").innerText = "Spelen"
                         } else {
                             // Playing
                             EmbedController.play()
-                            document.getElementById("play-icon").innerHTML = "&#x23F8" // Pause symbol
                             document.getElementById("play-text").innerText = "Pauzeren"
                         }
                         if (!playedOnce) {
