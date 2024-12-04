@@ -60,7 +60,7 @@
             </table>
             <div class="track-row"><a target="_blank" title="Open nummer in Spotify" href="https://open.spotify.com/track/{{ .track_id }}"><img height=250 width=250 src="{{ .album_image_url }}" alt="{{ .album_name }}"></a></div>
 
-            <a href="/"><button style="margin-top: 1rem" class="action-item">Volgende nummer</button></a>
+            <a href="/"><button style="margin-top: 1rem" class="action-item" id="next">Volgende nummer</button></a>
         </div>
         </div>
         <div id="embed-iframe"></div>
@@ -77,6 +77,7 @@
                 };
                 let playing = false
                 const callback = (EmbedController) => {
+                    document.getElementById("play").focus()
                     let togglePlay = () => {
                         playing = !playing
                         if (!playing) {
@@ -90,6 +91,7 @@
                         if (!playedOnce) {
                             setTimeout(() => {
                                 document.getElementById("reveal").removeAttribute("disabled")
+                                document.getElementById("reveal").focus()
                             }, 750)
                         }
                         playedOnce = true
@@ -111,6 +113,7 @@
 
             document.getElementById("reveal").addEventListener("click", () => {
                 document.getElementById("track-details").classList.remove("hidden")
+                document.getElementById("next").focus()
             })
         </script>
     </body>
