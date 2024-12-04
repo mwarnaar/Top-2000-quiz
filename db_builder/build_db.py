@@ -17,7 +17,7 @@ with open("tracks_dump.json", "rb") as tracks:
         track_name = track.get("name")
         track_href = track.get("uri")
 
-        artist_name = track.get("artists")[0].get("name")
+        artist_name = ", ".join([artist.get("name") for artist in track.get("artists")])
         artist_id = track.get("artists")[0].get("id")
 
         album_release_date = track.get("album").get("release_date").replace("-", "")
