@@ -2,12 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type track struct {
@@ -36,8 +36,7 @@ func getRandomTrack(db *sql.DB) track {
 			album_image_url,
 			album_release_date
 		FROM all_songs
-		ORDER BY RANDOM()
-		LIMIT 1;
+		WHERE rowid = (abs(random()) % 1996) + 1
 	`)
 	var t track
 	err := row.Scan(
@@ -58,7 +57,7 @@ func getRandomTrack(db *sql.DB) track {
 }
 
 func getDatabaseHandle() *sql.DB {
-	db, err := sql.Open("sqlite3", "./top2000.sqlite3")
+	db, err := sql.Open("sqlite", "file:./top2000.sqlite3?mode=ro")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,22 +72,43 @@ func initApplication() (*gin.Engine, *sql.DB) {
 	return router, db
 }
 
+var (
+	jobIsRunning      bool
+	jobIsRunningMutex sync.Mutex
+	randomTrack       track
+)
+
+func getNewRandomTrackIfNotLoading(db *sql.DB) {
+	jobIsRunningMutex.Lock()
+	start := !jobIsRunning
+	jobIsRunning = true
+	jobIsRunningMutex.Unlock()
+	if start {
+		go func() {
+			jobIsRunningMutex.Lock()
+			randomTrack = getRandomTrack(db)
+			jobIsRunning = false
+			jobIsRunningMutex.Unlock()
+		}()
+	}
+}
+
 func main() {
 	router, db := initApplication()
 	defer db.Close()
+	randomTrack = getRandomTrack(db)
 
 	router.GET("/", func(c *gin.Context) {
-		track := getRandomTrack(db)
-		fmt.Printf("URI: %s, artist: %s, title: %s\n", track.track_href, track.artist_name, track.track_name)
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"track_id":           track.track_id,
-			"track_uri":          track.track_href,
-			"artist_name":        track.artist_name,
-			"album_name":         track.album_name,
-			"track_name":         track.track_name,
-			"album_image_url":    track.album_image_url,
-			"album_release_date": track.album_release_date,
+			"track_id":           randomTrack.track_id,
+			"track_uri":          randomTrack.track_href,
+			"artist_name":        randomTrack.artist_name,
+			"album_name":         randomTrack.album_name,
+			"track_name":         randomTrack.track_name,
+			"album_image_url":    randomTrack.album_image_url,
+			"album_release_date": randomTrack.album_release_date,
 		})
+		getNewRandomTrackIfNotLoading(db)
 	})
 	router.Run(":8080")
 }
