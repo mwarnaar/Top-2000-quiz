@@ -20,11 +20,12 @@ type track struct {
 	Album_release_date string
 }
 
-// Truncate release date YMD, YM, Y strings to Y
+// Truncate release date to year (Y)
 func getAlbumReleaseYear(rawInput string) string {
 	return rawInput[0:4]
 }
 
+// Get random track from SQLite
 func getRandomTrack(db *sql.DB) track {
 	row := db.QueryRow(`
 		SELECT
@@ -56,6 +57,7 @@ func getRandomTrack(db *sql.DB) track {
 	return t
 }
 
+// Open SQLite database
 func getDatabaseHandle() *sql.DB {
 	db, err := sql.Open("sqlite", "file:./top2000.sqlite3?mode=ro")
 	if err != nil {
@@ -64,18 +66,17 @@ func getDatabaseHandle() *sql.DB {
 	return db
 }
 
+// State about running DB query job and current provided random track
 var (
 	jobIsRunning int32
 	randomTrack  track
 )
 
 func getNewRandomTrackIfNotLoading(db *sql.DB) {
-	// Atomically check if the job is already running (0 means not running)
 	if atomic.CompareAndSwapInt32(&jobIsRunning, 0, 1) {
-		// We acquired the job, spawn a goroutine to fetch the track
 		go func() {
-			defer atomic.StoreInt32(&jobIsRunning, 0) // Mark job as done once goroutine finishes
-			randomTrack = getRandomTrack(db)          // Fetch the random track from DB
+			randomTrack = getRandomTrack(db)
+			atomic.StoreInt32(&jobIsRunning, 0)
 		}()
 	}
 }
