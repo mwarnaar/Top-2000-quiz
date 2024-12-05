@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"sync"
+	"sync/atomic"
 	"text/template"
 
 	_ "modernc.org/sqlite"
@@ -64,34 +64,24 @@ func getDatabaseHandle() *sql.DB {
 	return db
 }
 
-func initApplication() *sql.DB {
-	db := getDatabaseHandle()
-	return db
-}
-
 var (
-	jobIsRunning      bool
-	jobIsRunningMutex sync.Mutex
-	randomTrack       track
+	jobIsRunning int32
+	randomTrack  track
 )
 
 func getNewRandomTrackIfNotLoading(db *sql.DB) {
-	jobIsRunningMutex.Lock()
-	start := !jobIsRunning
-	jobIsRunning = true
-	jobIsRunningMutex.Unlock()
-	if start {
+	// Atomically check if the job is already running (0 means not running)
+	if atomic.CompareAndSwapInt32(&jobIsRunning, 0, 1) {
+		// We acquired the job, spawn a goroutine to fetch the track
 		go func() {
-			jobIsRunningMutex.Lock()
-			randomTrack = getRandomTrack(db)
-			jobIsRunning = false
-			jobIsRunningMutex.Unlock()
+			defer atomic.StoreInt32(&jobIsRunning, 0) // Mark job as done once goroutine finishes
+			randomTrack = getRandomTrack(db)          // Fetch the random track from DB
 		}()
 	}
 }
 
 func main() {
-	db := initApplication()
+	db := getDatabaseHandle()
 	defer db.Close()
 	randomTrack = getRandomTrack(db)
 	indexTemplate, err := template.ParseFiles("templates/index.tmpl")
