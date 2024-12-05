@@ -5,19 +5,19 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"text/template"
 
-	"github.com/gin-gonic/gin"
 	_ "modernc.org/sqlite"
 )
 
 type track struct {
-	track_id           string
-	track_href         string
-	artist_name        string
-	track_name         string
-	album_name         string
-	album_image_url    string
-	album_release_date string
+	Track_id           string
+	Track_href         string
+	Artist_name        string
+	Track_name         string
+	Album_name         string
+	Album_image_url    string
+	Album_release_date string
 }
 
 // Truncate release date YMD, YM, Y strings to Y
@@ -40,18 +40,18 @@ func getRandomTrack(db *sql.DB) track {
 	`)
 	var t track
 	err := row.Scan(
-		&t.track_id,
-		&t.track_href,
-		&t.artist_name,
-		&t.track_name,
-		&t.album_name,
-		&t.album_image_url,
-		&t.album_release_date,
+		&t.Track_id,
+		&t.Track_href,
+		&t.Artist_name,
+		&t.Track_name,
+		&t.Album_name,
+		&t.Album_image_url,
+		&t.Album_release_date,
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	t.album_release_date = getAlbumReleaseYear(t.album_release_date)
+	t.Album_release_date = getAlbumReleaseYear(t.Album_release_date)
 
 	return t
 }
@@ -64,12 +64,9 @@ func getDatabaseHandle() *sql.DB {
 	return db
 }
 
-func initApplication() (*gin.Engine, *sql.DB) {
+func initApplication() *sql.DB {
 	db := getDatabaseHandle()
-	router := gin.Default()
-	router.LoadHTMLFiles("templates/index.tmpl")
-	router.Static("/public", "./public")
-	return router, db
+	return db
 }
 
 var (
@@ -94,21 +91,26 @@ func getNewRandomTrackIfNotLoading(db *sql.DB) {
 }
 
 func main() {
-	router, db := initApplication()
+	db := initApplication()
 	defer db.Close()
 	randomTrack = getRandomTrack(db)
+	indexTemplate, err := template.ParseFiles("templates/index.tmpl")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"track_id":           randomTrack.track_id,
-			"track_uri":          randomTrack.track_href,
-			"artist_name":        randomTrack.artist_name,
-			"album_name":         randomTrack.album_name,
-			"track_name":         randomTrack.track_name,
-			"album_image_url":    randomTrack.album_image_url,
-			"album_release_date": randomTrack.album_release_date,
-		})
+	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))))
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		err = indexTemplate.Execute(w, randomTrack)
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			log.Fatal(w)
+			return
+		}
+
 		getNewRandomTrackIfNotLoading(db)
 	})
-	router.Run(":8080")
+
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

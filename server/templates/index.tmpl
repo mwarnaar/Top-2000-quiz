@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="nl">
     <head>
         <title>Top 2000 quiz</title>
@@ -76,14 +77,13 @@
         </div>
         <div id="track-details" class="hidden">
             <table style="margin: 0 auto">
-                <tr><th>Artiest</th><td>{{ .artist_name }}</td></tr>
-                <tr><th>Titel</th><td>{{ .track_name }}</td></tr>
-                <tr><th>Album</th><td>{{ .album_name }} &mdash; uitgebracht {{ .album_release_date }}</td></tr>
+                <tr><th>Artiest</th><td>{{ .Artist_name }}</td></tr>
+                <tr><th>Titel</th><td>{{ .Track_name }}</td></tr>
+                <tr><th>Album</th><td>{{ .Album_name }} &mdash; uitgebracht {{ .Album_release_date }}</td></tr>
             </table>
-            <div class="track-row"><a target="_blank" title="Open nummer in Spotify" href="https://open.spotify.com/track/{{ .track_id }}"><img height=250 width=250 src="{{ .album_image_url }}" alt="{{ .album_name }}"></a></div>
+            <div class="track-row"><a target="_blank" title="Open nummer in Spotify" href="https://open.spotify.com/track/{{ .Track_id }}"><img height=250 width=250 src="{{ .Album_image_url }}" alt="{{ .Album_name }}"></a></div>
 
             <a href="/"><button style="margin-top: 1rem" class="action-item" id="next" type="button">Volgende nummer</button></a>
-        </div>
         </div>
         <div id="embed-iframe"></div>
         <script src="https://open.spotify.com/embed/iframe-api/v1" async>
@@ -125,7 +125,7 @@
                 const options = {
                     width: '0%',
                     height: '0',
-                    uri: {{ .track_uri }}
+                    uri: "{{ .Track_href }}"
                 }
                 let playing = false
                 const callback = (EmbedController) => {
@@ -163,7 +163,7 @@
                 document.getElementById("track-details").classList.remove("hidden")
                 const selectedArtist = document.getElementById("artist-choice").value
                 const selectedTrack = document.getElementById("track-choice").value
-                const correct = selectedTrack == "{{ .track_name }}" && selectedArtist == "{{ .artist_name }}"
+                const correct = selectedTrack == "{{ .Track_name }}" && selectedArtist == "{{ .Artist_name }}"
 
                 document.getElementById("track-details").classList.remove("correct")
                 document.getElementById("track-details").classList.remove("incorrect")
