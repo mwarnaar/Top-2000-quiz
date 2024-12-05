@@ -76,6 +76,7 @@ func initApplication() (*gin.Engine, *sql.DB) {
 func main() {
 	router, db := initApplication()
 	defer db.Close()
+
 	router.GET("/", func(c *gin.Context) {
 		track := getRandomTrack(db)
 		fmt.Printf("URI: %s, artist: %s, title: %s\n", track.track_href, track.artist_name, track.track_name)

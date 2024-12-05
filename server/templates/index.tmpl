@@ -7,16 +7,17 @@
             min-width: 125px;
             text-align: center;
             margin: 0 auto;
-            width: 20%;
+            width: 30%;
         }
-        @media (width <= 768px) {
-            .action-items {
-                width: 50%;
-            }
+        label {
+            width: 4rem;
+            display: inline-block;
+            text-align: right;
+            padding-right: .2rem;
         }
         @media (width <= 992px) {
             .action-items {
-                width: 40%;
+                width: 70%;
             }
         }
 
@@ -27,6 +28,14 @@
             text-align: center;
             width: 70%;
             margin: 0 auto;
+            padding: 1rem;
+            border: 3px solid;
+        }
+        #track-details.correct {
+            border-color: green;
+        }
+        #track-details.incorrect {
+            border-color: #b60000;
         }
         .inner-details {
             text-align: left;
@@ -49,35 +58,77 @@
         <h1 style="text-align: center; font-family: sans-serif">Raad het nummer</h1>
         <h4 style="text-align: center; font-family: sans-serif">Top 2000 (lijst 2023)</h4>
         <div class="action-items">
-            <button class="action-item" id="play">&#9199; <span id="play-text">Spelen</span></button>
-            <button class="action-item" disabled="disabled" id="reveal">Toon nummer</button>
+            <form onsubmit="return submitForm(event)">
+                <button class="action-item" id="play" type="button">&#9199; <span id="play-text">Spelen</span></button>
+                <div class="action-item">
+                    <label for="artist-choice">Artiest:</label>
+                    <input list="artists" id="artist-choice" name="artist-choice" />
+                    <datalist id="artists">
+                    </datalist>
+                </div>
+                <div class="action-item">
+                    <label for="track-choice">Titel:</label>
+                    <input list="tracks" id="track-choice" name="track-choice" />
+                    <datalist id="tracks"></datalist>
+                </div>
+                <button type="submit" class="action-item" disabled="disabled" id="reveal">Check</button>
+            </form>
         </div>
         <div id="track-details" class="hidden">
             <table style="margin: 0 auto">
-                <tr><th>Titel</th><td>{{ .track_name }}</td></tr>
                 <tr><th>Artiest</th><td>{{ .artist_name }}</td></tr>
+                <tr><th>Titel</th><td>{{ .track_name }}</td></tr>
                 <tr><th>Album</th><td>{{ .album_name }} &mdash; uitgebracht {{ .album_release_date }}</td></tr>
             </table>
             <div class="track-row"><a target="_blank" title="Open nummer in Spotify" href="https://open.spotify.com/track/{{ .track_id }}"><img height=250 width=250 src="{{ .album_image_url }}" alt="{{ .album_name }}"></a></div>
 
-            <a href="/"><button style="margin-top: 1rem" class="action-item" id="next">Volgende nummer</button></a>
+            <a href="/"><button style="margin-top: 1rem" class="action-item" id="next" type="button">Volgende nummer</button></a>
         </div>
         </div>
         <div id="embed-iframe"></div>
         <script src="https://open.spotify.com/embed/iframe-api/v1" async>
         </script>
+        <script src="/public/songs_tracks.js"></script>
         <script type="text/javascript">
             let playedOnce = false
+            const populateArtistOptions = () => {
+                const artistsDataList = document.getElementById("artists")
+                const artistOptions = songs_tracks["artists"]
+                const artistsFragment = document.createDocumentFragment()
+                for (const artistOption of artistOptions) {
+                    const artistDatalistOption = document.createElement("option")
+                    artistDatalistOption.value = artistOption
+                    artistDatalistOption.innerText = artistOption
+                    artistsFragment.appendChild(artistDatalistOption)
+                }
+                artistsDataList.appendChild(artistsFragment)
+            }
+            const populateTrackOptions = () => {
+                const tracksDataList = document.getElementById("tracks")
+                const trackOptions = songs_tracks["track_names"]
+                const tracksFragment = document.createDocumentFragment()
+                for (const trackOption of trackOptions) {
+                    const trackDatalistOption = document.createElement("option")
+                    trackDatalistOption.value = trackOption
+                    trackDatalistOption.innerText = trackOption
+                    tracksFragment.appendChild(trackDatalistOption)
+                }
+                tracksDataList.appendChild(tracksFragment)
+            }
+            document.addEventListener("DOMContentLoaded", () => {
+                populateArtistOptions()
+                populateTrackOptions()
+            })
+
             window.onSpotifyIframeApiReady = (IFrameAPI) => {
-                const element = document.getElementById('embed-iframe');
+                const element = document.getElementById('embed-iframe')
                 const options = {
                     width: '0%',
                     height: '0',
                     uri: {{ .track_uri }}
-                };
+                }
                 let playing = false
                 const callback = (EmbedController) => {
-                    document.getElementById("play").focus()
                     let togglePlay = () => {
                         playing = !playing
                         if (!playing) {
@@ -98,13 +149,26 @@
                     document.getElementById("play").addEventListener("click", () => {
                         togglePlay()
                     })
-                };
-                IFrameAPI.createController(element, options, callback);
-            };
+                }
+                IFrameAPI.createController(element, options, callback)
+            }
 
-            document.getElementById("reveal").addEventListener("click", () => {
+            const submitForm = event => {
+                event.preventDefault()
+                reveal()
+                return false
+            }
+
+            const reveal = () => {
                 document.getElementById("track-details").classList.remove("hidden")
-            })
+                const selectedArtist = document.getElementById("artist-choice").value
+                const selectedTrack = document.getElementById("track-choice").value
+                const correct = selectedTrack == "{{ .track_name }}" && selectedArtist == "{{ .artist_name }}"
+
+                document.getElementById("track-details").classList.remove("correct")
+                document.getElementById("track-details").classList.remove("incorrect")
+                document.getElementById("track-details").classList.add(correct ? "correct": "incorrect")
+            }
         </script>
     </body>
 </html>
