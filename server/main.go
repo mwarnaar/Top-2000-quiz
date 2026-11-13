@@ -93,8 +93,14 @@ func main() {
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+
 		err = indexTemplate.Execute(w, randomTrack)
 		if err != nil {
+
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			log.Fatal(w)
 			return

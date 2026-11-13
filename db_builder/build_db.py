@@ -1,5 +1,8 @@
 import json
+import os
 import sqlite3
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 con = sqlite3.connect("top2000.sqlite3")
 cursor = con.cursor()
@@ -7,6 +10,9 @@ cursor = con.cursor()
 # CREATE TABLE all_songs(track_id VARCHAR(255), track_name VARCHAR(255), track_href VARCHAR(1024), artist_id VARCHAR(255), artist_name VARCHAR(255), album_id VARCHAR(255), album_name VARCHAR(255), album_release_date VARCHAR(10), album_image_url VARCHAR(1024));
 
 cursor.execute("DELETE FROM all_songs")
+
+artists = set()
+track_names = set()
 
 with open("tracks_dump.json", "rb") as tracks:
     tracks = json.loads(tracks.read())
@@ -19,6 +25,9 @@ with open("tracks_dump.json", "rb") as tracks:
 
         artist_name = ", ".join([artist.get("name") for artist in track.get("artists")])
         artist_id = track.get("artists")[0].get("id")
+
+        artists.add(artist_name)
+        track_names.add(track_name)
 
         album_release_date = track.get("album").get("release_date").replace("-", "")
         album_id = track.get("album").get("id")
@@ -46,3 +55,14 @@ with open("tracks_dump.json", "rb") as tracks:
         sql = "INSERT INTO all_songs(track_id, track_name, track_href, artist_id, artist_name, album_id, album_name, album_release_date, album_image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         cursor.execute(sql, record)
 con.commit()
+
+songs_tracks = {
+    "artists": sorted(artists),
+    "track_names": sorted(track_names),
+}
+with open(
+    os.path.join(BASE_DIR, "songs_tracks.js"), "w", encoding="utf-8"
+) as songs_tracks_file:
+    songs_tracks_file.write(
+        f"const songs_tracks = {json.dumps(songs_tracks, ensure_ascii=False, separators=(',', ':'))}\n"
+    )
